@@ -1,1 +1,1 @@
-pyinstaller --onefile --noconsole --icon=icone.ico unidas_dataimport1.5.py
+pyinstaller --onefile --noconsole --icon=icone.ico dataimport.py
