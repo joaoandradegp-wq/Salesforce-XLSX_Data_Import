@@ -8,6 +8,7 @@ import os
 caminho_arquivo = None
 pasta_saida = None
 processado = False
+versao = '1.6'
 
 # ==================== FUNÇÕES DE UTILIDADE ====================
 
@@ -133,10 +134,15 @@ def processar_planilha():
         aba_account = [a for a in abas if "account" in a.lower()][0]
         df_account = pd.read_excel(xls, sheet_name=aba_account)
 
-        if "Id" in df_account.columns:
-            df_account["Id"] = conta_id
+        # --- GARANTIR QUE A PRIMEIRA COLUNA SEJA O ID DA CONTA ---
+        primeira_coluna = df_account.columns[0]
+
+        # Se a primeira coluna parecer ser um ID, força a substituição
+        if primeira_coluna.lower() in ["id", "accountid"]:
+            df_account[primeira_coluna] = conta_id
         else:
             df_account.insert(0, "Id", conta_id)
+
 
         df_account.rename(
             columns=lambda c: "Email__c" if isinstance(c, str) and c.strip().lower() == "email" else c,
@@ -164,8 +170,12 @@ def processar_planilha():
             inplace=True
         )
 
-        if "AccountId" in df_contract.columns:
+        primeira_coluna = df_contract.columns[0]
+        if primeira_coluna.lower() in ["id", "accountid"]:
+            df_contract[primeira_coluna] = conta_id
+        else:
             df_contract["AccountId"] = conta_id
+
 
         df_contract["Status"] = "Draft"
         df_contract["IRIS_Categoria_Contrato__c"] = "2"
@@ -194,8 +204,12 @@ def processar_planilha():
             inplace=True
         )
 
-        if "AccountId" in df_ativo.columns:
+        primeira_coluna = df_ativo.columns[0]
+        if primeira_coluna.lower() in ["id", "accountid"]:
+            df_ativo[primeira_coluna] = conta_id
+        else:
             df_ativo["AccountId"] = conta_id
+
 
         for col in df_ativo.columns:
             if "date" in col.lower() or "data" in col.lower():
@@ -248,7 +262,7 @@ def processar_planilha():
 # ==================== INTERFACE ====================
 
 root = tk.Tk()
-root.title("Conversor de Planilha para Importação via CSV 1.6 - Aggrandize - João Márcio Bicalho Andrade")
+root.title("Conversor de Planilha para Importação via CSV "+versao+" - Aggrandize - João Márcio Bicalho Andrade")
 centralizar_janela(root, 700, 450)
 root.protocol("WM_DELETE_WINDOW", ao_fechar)
 
