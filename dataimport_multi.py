@@ -81,6 +81,17 @@ def processar_planilha():
     try:
         xls = pd.ExcelFile(caminho_arquivo)
 
+        abas = xls.sheet_names
+
+        for aba in ["Account", "Contract", "Ativo"]:
+            if not any(aba.lower() in nome.lower() for nome in abas):
+                messagebox.showerror(
+                    "Erro",
+                    f"Aba '{aba}' não foi encontrada no arquivo Excel."
+                )
+                return
+
+
         mapa_renomeacao = {
             "ContractNumber": "_ContractNumber",
             "Account.Name": "_Account.Name",
@@ -95,6 +106,8 @@ def processar_planilha():
         )
 
         df_account["Id"] = ids
+        df_account["Id"] = df_account["Id"].astype(str)
+
 
         df_account.rename(
             columns=lambda c: "Email__c" if isinstance(c, str) and c.strip().lower() == "email" else c,
@@ -106,7 +119,7 @@ def processar_planilha():
             "Erro",
             "Quantidade de Account IDs diferente da quantidade de registros da aba Account."
             )
-        return
+            return
 
 
         if "CPF__pc" in df_account.columns:
@@ -131,6 +144,8 @@ def processar_planilha():
         df_contract.drop(columns=["Id"], inplace=True, errors="ignore")
         df_contract = df_contract[["AccountId"] + [c for c in df_contract.columns if c != "AccountId"]]
 
+        df_contract["AccountId"] = df_contract["AccountId"].astype(str)
+
         df_contract["Status"] = "Draft"
         df_contract["IRIS_Categoria_Contrato__c"] = "2"
 
@@ -139,7 +154,7 @@ def processar_planilha():
             "Erro",
             "Quantidade de Account IDs diferente da quantidade de registros da aba Contract."
             )
-        return
+            return
 
         for col in df_contract.columns:
             if "date" in col.lower() or "data" in col.lower():
@@ -165,12 +180,14 @@ def processar_planilha():
         df_asset.drop(columns=["Id"], inplace=True, errors="ignore")
         df_asset = df_asset[["AccountId"] + [c for c in df_asset.columns if c != "AccountId"]]
 
+        df_asset["AccountId"] = df_asset["AccountId"].astype(str)
+
         if len(df_asset) != len(ids):
             messagebox.showerror(
             "Erro",
             "Quantidade de Account IDs diferente da quantidade de registros da aba Assets."
             )
-        return
+            return
 
         for col in df_asset.columns:
             if "date" in col.lower() or "data" in col.lower():
