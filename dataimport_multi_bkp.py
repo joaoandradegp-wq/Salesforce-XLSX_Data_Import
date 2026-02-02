@@ -8,17 +8,9 @@ import os
 caminho_arquivo = None
 pasta_saida = None
 processado = False
-versao = "1.7 - Multi"
+versao = "1.6 - Multi"
 
 # ==================== FUNÇÕES DE UTILIDADE ====================
-
-def atualizar_contador_ids(event=None):
-    root.after(1, lambda: _contar_ids())
-
-def _contar_ids():
-    linhas = text_contas.get("1.0", tk.END).splitlines()
-    total = sum(1 for l in linhas if l.strip())
-    label_contador.config(text=str(total))
 
 def centralizar_janela(root, largura, altura):
     root.update_idletasks()
@@ -44,7 +36,6 @@ def resetar_interface(*args):
     pasta_saida = None
     processado = False
     label_status.config(text="Nenhum arquivo anexado", fg="red")
-    label_contador.config(text="0")
     for w in frame_botoes_csv.winfo_children():
         w.destroy()
 
@@ -253,45 +244,8 @@ root.protocol("WM_DELETE_WINDOW", ao_fechar)
 
 tk.Label(root, text="Insira os Account IDs (1 por linha):").pack(pady=5)
 
-frame_ids = tk.Frame(root)
-frame_ids.pack(pady=5)
-
-# ----- Frame do Text + Scroll -----
-frame_text = tk.Frame(frame_ids)
-frame_text.pack(side=tk.LEFT)
-
-scroll_ids = tk.Scrollbar(frame_text)
-scroll_ids.pack(side=tk.RIGHT, fill=tk.Y)
-
-text_contas = tk.Text(
-    frame_text,
-    height=6,
-    width=60,
-    yscrollcommand=scroll_ids.set
-)
-text_contas.pack(side=tk.LEFT)
-
-scroll_ids.config(command=text_contas.yview)
-
-# ----- Contador -----
-label_contador = tk.Label(
-    frame_ids,
-    text="0",
-    font=("Verdana", 10, "bold"),
-    width=4
-)
-label_contador.pack(side=tk.LEFT, padx=6)
-
-text_contas.bind(
-    "<Control-v>",
-    lambda e: (atualizar_contador_ids(e), text_contas.after(1, lambda: text_contas.see(tk.END)))
-)
-text_contas.bind(
-    "<Control-V>",
-    lambda e: (atualizar_contador_ids(e), text_contas.after(1, lambda: text_contas.see(tk.END)))
-)
-
-text_contas.bind("<Return>", atualizar_contador_ids)
+text_contas = tk.Text(root, height=6, width=70)
+text_contas.pack(pady=5)
 text_contas.bind("<KeyPress>", resetar_interface)
 
 tk.Button(root, text="Anexar Arquivo", command=anexar_arquivo).pack(pady=5)
