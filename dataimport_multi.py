@@ -8,7 +8,7 @@ import os
 caminho_arquivo = None
 pasta_saida = None
 processado = False
-versao = "1.7 - Multi"
+versao = "1.6.1 - Multi"
 
 # ==================== FUNÇÕES DE UTILIDADE ====================
 
@@ -106,7 +106,11 @@ def processar_planilha():
             "Account.Name": "_Account.Name",
             "IDExternoAX__c": "_IDExternoAX__c",
             "EndDate": "_EndDate",
-            "RecordType.DeveloperName": "_RecordType.DeveloperName"
+            "RecordType.DeveloperName": "_RecordType.DeveloperName",
+            # INSERIDO ABAIXO POR CAUSA DESTES CAMPOS TRAVAREM A ATUALIZAÇÃO, PORÉM VIA UPDATE POSTERIOR SE RESOLVE.
+            "IRIS_Codigo_Status_do_Tanque__c": "_IRIS_Codigo_Status_do_Tanque__c",
+            "IRIS_Codigo_Situacao_do_Agendamento__c": "_IRIS_Codigo_Situacao_do_Agendamento__c"
+            
         }
 
         # ================= ACCOUNT =================
