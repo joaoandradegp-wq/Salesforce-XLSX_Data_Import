@@ -12,6 +12,95 @@ versao = "1.6.1 - Multi"
 
 # ==================== FUNÇÕES DE UTILIDADE ====================
 
+def resetar_pos_digitacao():
+    global processado
+    limpar_csvs()
+    processado = False
+    for w in frame_botoes_csv.winfo_children():
+        w.destroy()
+
+
+def gerar_soql_por_cpf():
+    if not caminho_arquivo:
+        return
+
+    try:
+        xls = pd.ExcelFile(caminho_arquivo)
+
+        aba_alvo = None
+        for nome in xls.sheet_names:
+            if "account" in nome.lower() or "clientes" in nome.lower():
+                aba_alvo = nome
+                break
+
+        if not aba_alvo:
+            messagebox.showerror(
+                "Erro",
+                "Nenhuma aba contendo 'Account' ou 'Clientes' foi encontrada."
+            )
+            return
+
+        df = pd.read_excel(xls, sheet_name=aba_alvo)
+
+        if "CPF__pc" not in df.columns:
+            messagebox.showerror(
+                "Erro",
+                "A coluna CPF__pc não foi encontrada na aba selecionada."
+            )
+            return
+
+        cpfs = (
+            df["CPF__pc"]
+            .dropna()
+            .astype(str)
+            .str.replace(r"\D", "", regex=True)
+            .apply(lambda x: x.zfill(11))
+            .unique()
+            .tolist()
+        )
+
+        if not cpfs:
+            messagebox.showerror("Erro", "Nenhum CPF válido encontrado.")
+            return
+
+        lista_cpfs = ", ".join(f"'{c}'" for c in cpfs)
+
+        soql = (
+            "SELECT Id, Name, CPF__pc\n"
+            "FROM Account\n"
+            f"WHERE CPF__pc IN ({lista_cpfs})\n"
+            "ORDER BY Name"
+        )
+
+        root.clipboard_clear()
+        root.clipboard_append(soql)
+        root.update()
+
+        messagebox.showinfo(
+            "SOQL copiado",
+            f"SOQL gerado com {len(cpfs)} CPF(s) e copiado para a área de transferência."
+        )
+
+    except Exception as e:
+        messagebox.showerror("Erro ao gerar SOQL", str(e))
+
+
+def atualizar_botao_soql():
+    if "btn_soql_cpf" not in globals():
+        return
+
+    ids_preenchidos = any(
+        l.strip() for l in text_contas.get("1.0", tk.END).splitlines()
+    )
+
+    if caminho_arquivo and not ids_preenchidos:
+        if not btn_soql_cpf.winfo_ismapped():
+            btn_soql_cpf.pack(side=tk.LEFT, padx=5)
+    else:
+        if btn_soql_cpf.winfo_ismapped():
+            btn_soql_cpf.pack_forget()
+
+
 def atualizar_contador_ids(event=None):
     root.after(1, lambda: _contar_ids())
 
@@ -47,6 +136,7 @@ def resetar_interface(*args):
     label_contador.config(text="0")
     for w in frame_botoes_csv.winfo_children():
         w.destroy()
+    atualizar_botao_soql()
 
 def ao_fechar():
     limpar_csvs()
@@ -64,6 +154,7 @@ def anexar_arquivo():
     if caminho:
         caminho_arquivo = caminho
         label_status.config(text="✅ OK", fg="green")
+        atualizar_botao_soql()
 
 def abrir_csv(nome):
     caminho = os.path.join(pasta_saida, nome)
@@ -296,9 +387,30 @@ text_contas.bind(
 )
 
 text_contas.bind("<Return>", atualizar_contador_ids)
-text_contas.bind("<KeyPress>", resetar_interface)
 
-tk.Button(root, text="Anexar Arquivo", command=anexar_arquivo).pack(pady=5)
+def on_keypress(event):
+    resetar_pos_digitacao()
+    atualizar_botao_soql()
+
+text_contas.bind("<KeyPress>", on_keypress)
+
+frame_anexo = tk.Frame(root)
+frame_anexo.pack(pady=5)
+
+btn_anexar = tk.Button(
+    frame_anexo,
+    text="Anexar Arquivo",
+    command=anexar_arquivo
+)
+btn_anexar.pack(side=tk.LEFT, padx=5)
+
+btn_soql_cpf = tk.Button(
+    frame_anexo,
+    text="Gerar SOQL por CPF",
+    command=gerar_soql_por_cpf,
+    bg="#673AB7",
+    fg="white"
+)
 
 label_status = tk.Label(root, text="Nenhum arquivo anexado", fg="red")
 label_status.pack(pady=5)
