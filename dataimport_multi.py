@@ -8,7 +8,7 @@ import os
 caminho_arquivo = None
 pasta_saida = None
 processado = False
-versao = "1.6.1 - Multi"
+versao = "1.6.2 - Multi"
 
 # ==================== FUNÇÕES DE UTILIDADE ====================
 
@@ -273,7 +273,7 @@ def processar_planilha():
             if campo in df_contract.columns:
                 df_contract[campo] = "TRUE"
 
-        df_contract["RecordTypeId"] = "0125A0000013RxeQAE"
+        df_contract["RecordTypeId"] = "012U6000000OTnFIAW"
 
         df_contract.rename(columns=mapa_renomeacao, inplace=True)
 
