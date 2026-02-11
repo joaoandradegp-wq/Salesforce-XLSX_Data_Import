@@ -273,6 +273,8 @@ def processar_planilha():
             if campo in df_contract.columns:
                 df_contract[campo] = "TRUE"
 
+        df_contract["RecordTypeId"] = "0125A0000013RxeQAE"
+
         df_contract.rename(columns=mapa_renomeacao, inplace=True)
 
         # ================= ASSET =================
