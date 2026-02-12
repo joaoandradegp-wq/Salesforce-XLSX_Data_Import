@@ -1,0 +1,1 @@
+pyinstaller --onefile --noconsole --icon=icone.ico SOQL.py
