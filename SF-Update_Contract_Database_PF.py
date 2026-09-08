@@ -306,10 +306,14 @@ def load_previous_data(path):
 
 def compare_data(current_rows, previous_data):
     """Compara os registros atuais com os da execucao anterior.
-    Retorna (total, novos, atualizados)."""
+    Retorna (total, novos, atualizados, changed_rows), onde changed_rows
+    e a lista (na mesma ordem/estrutura de current_rows) contendo apenas
+    os registros novos ou que sofreram alguma alteracao - e essa lista
+    que deve ser usada para importacao."""
     total = len(current_rows)
     novos = 0
     atualizados = 0
+    changed_rows = []
 
     for item in current_rows:
         rid = item["id"]
@@ -317,6 +321,7 @@ def compare_data(current_rows, previous_data):
             continue
         if rid not in previous_data:
             novos += 1
+            changed_rows.append(item)
             continue
 
         prev = previous_data[rid]
@@ -327,8 +332,9 @@ def compare_data(current_rows, previous_data):
         )
         if changed:
             atualizados += 1
+            changed_rows.append(item)
 
-    return total, novos, atualizados
+    return total, novos, atualizados, changed_rows
 
 
 def write_log(log_dir, ref_date, total, novos, atualizados):
@@ -530,13 +536,14 @@ class App:
         if previous_path:
             self.log(f"Planilha de execucao anterior encontrada: {os.path.basename(previous_path)}")
             previous_data = load_previous_data(previous_path)
-            total, novos, atualizados = compare_data(processed_rows, previous_data)
+            total, novos, atualizados, changed_rows = compare_data(processed_rows, previous_data)
             self.log("Comparacao concluida:")
         else:
             self.log("Nenhuma execucao anterior encontrada em Contract\\Data (primeira execucao).")
             total = len(processed_rows)
             novos = total
             atualizados = 0
+            changed_rows = processed_rows
 
         log_line = write_log(self.log_dir, ref_date, total, novos, atualizados)
         self.log(f"  - Total de registros: {total}")
@@ -558,15 +565,23 @@ class App:
         self.set_progress(95)
 
         # --- Copia para a area de transferencia (95-100%) ---
-        copy_rows_to_clipboard(self.root, processed_rows)
-        self.log("Dados copiados para a area de transferencia.")
+        # Apenas os registros novos/atualizados devem ser importados
+        copy_rows_to_clipboard(self.root, changed_rows)
+        self.log(f"Registros copiados para a area de transferencia (novos + atualizados): {len(changed_rows)}")
         self.set_progress(100)
 
-        messagebox.showinfo(
-            "Concluido",
-            "Base copiada para a área de transferência (CTRL+C) "
-            "para ser colada (CTRL+V) via DataImport",
-        )
+        if changed_rows:
+            messagebox.showinfo(
+                "Concluido",
+                f"{len(changed_rows)} registro(s) novo(s)/atualizado(s) copiado(s) para a "
+                "área de transferência (CTRL+C) para ser colado (CTRL+V) via DataImport",
+            )
+        else:
+            messagebox.showinfo(
+                "Concluido",
+                "Nenhum registro novo ou atualizado desde a ultima execucao. "
+                "Nada foi copiado para a area de transferencia.",
+            )
 
 
 def main():
